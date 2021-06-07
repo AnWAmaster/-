@@ -1,0 +1,83 @@
+原题链接：
+https://vjudge.net/contest/441568#problem/K
+
+题目大意：
+给出一个数组的各个元素值
+给出两种操作：
+1、询问下标区间为left~right的数组元素的最大值
+2、将下标为idx的数组元素修改为grade
+
+很熟悉的题啊，有多种操作，有区间取值，有单点修改，妥妥的线段树
+水题就没啥好说的了
+也就只有“不要直接用cin，会超时”这种提醒了
+
+AC代码
+#include<iostream>
+using namespace std;
+#define maxn 200001
+
+struct Node{
+	int l,r,data;
+}n[maxn*4];
+
+int N,M,a[maxn],ans;
+
+void pushup(int cur){
+	n[cur].data=max(n[cur*2].data,n[cur*2+1].data);
+}
+
+void build(int cur,int left,int right){
+	n[cur].l=left,n[cur].r=right;
+	if(left==right){
+		n[cur].data=a[left];
+		return;
+	}
+	int mid=(left+right)/2;
+	build(cur*2,left,mid);
+	build(cur*2+1,mid+1,right);
+	pushup(cur);
+}
+
+void query(int cur,int left,int right){
+	if(n[cur].l>right||n[cur].r<left)return;
+	if(n[cur].l>=left&&n[cur].r<=right){
+		ans=max(ans,n[cur].data);
+		return;
+	}
+	int mid=(left+right)/2;
+	query(cur*2,left,right);
+	query(cur*2+1,left,right);
+}
+
+void change(int cur,int tar,int grade){
+	if(n[cur].l>tar||n[cur].r<tar)return;
+	if(n[cur].l==n[cur].r){
+		n[cur].data=grade;
+		return;
+	}
+	change(cur*2,tar,grade);
+	change(cur*2+1,tar,grade);
+	pushup(cur);
+}
+
+int main(){
+	char opt;
+	int x,y;
+	std::ios::sync_with_stdio(false);
+	while(cin>>N>>M){
+		for(int i=1;i<=N;i++){
+			cin>>a[i]; 
+		}
+		build(1,1,N);
+		for(int i=1;i<=M;i++){
+			cin>>opt>>x>>y;
+			if(opt=='Q'){
+				ans=0;
+				query(1,x,y);
+				cout<<ans<<endl;
+			}else{
+				change(1,x,y);
+			}
+		}
+	}
+}
