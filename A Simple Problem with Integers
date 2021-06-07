@@ -1,0 +1,108 @@
+原题链接
+https://vjudge.net/contest/441568#problem/L
+
+题目大意：
+给出一个数组，
+给出两种操作
+1、区间加减值
+2、区间和查询
+
+线段树模板题
+不过这题数据有点大，要用到long long，并且因为有负数不能无脑unsigned long long
+然后典型的要用lazytag（算是对我lazytag操作的复习、练习吧）
+然后好像有点卡cin的时间
+没啥好说的了 上代码
+
+AC代码
+#include<iostream>
+using namespace std;
+#define maxn 110001
+typedef long long ll;
+
+struct Node{
+	ll l,r,sum,lazy;
+}n[maxn*4];
+
+ll a[maxn]; 
+
+void pushup(ll cur)
+{
+	n[cur].sum=n[cur*2].sum+n[cur*2+1].sum;
+}
+
+void pushdown(ll cur){//当遍历到当前树结点时，将lazytag下放并修改左右儿子结点的值 
+	if(n[cur].lazy)
+	{
+		n[cur*2].lazy+=n[cur].lazy;
+		n[cur*2+1].lazy+=n[cur].lazy;
+		n[cur*2].sum+=n[cur].lazy*(n[cur*2].r-n[cur*2].l+1);
+		n[cur*2+1].sum+=n[cur].lazy*(n[cur*2+1].r-n[cur*2+1].l+1);
+		n[cur].lazy=0;
+	}
+}
+
+void build(ll cur,ll left,ll right){
+	n[cur].l=left,n[cur].r=right;
+	n[cur].lazy=0;
+	if(left==right){
+		n[cur].sum=a[left];
+		return;
+	}
+	ll mid=(left+right)/2;
+	build(cur*2,left,mid);
+	build(cur*2+1,mid+1,right);
+	pushup(cur);
+}
+
+void change(ll cur,ll left,ll right,ll add){
+	if(n[cur].l>right||n[cur].r<left)return;
+	if(n[cur].l>=left&&n[cur].r<=right)
+	{
+		n[cur].sum+=add*(n[cur].r-n[cur].l+1);
+		n[cur].lazy+=add; //把lazytag留在这，暂时不下放 
+		return;
+	}
+	pushdown(cur);//还没被目标区间完全包含时，处理沿途的lazytag 
+	change(cur*2,left,right,add);
+	change(cur*2+1,left,right,add);
+	pushup(cur);
+}
+
+ll ans;
+
+void query(ll cur,ll left,ll right){
+	if(n[cur].l>right||n[cur].r<left)return;
+	if(n[cur].l>=left&&n[cur].r<=right){
+		ans+=n[cur].sum;
+		return;
+	}
+	pushdown(cur); 
+	query(cur*2,left,right);
+	query(cur*2+1,left,right);
+	pushup(cur);
+}
+
+int main(){
+	//std::ios::sync_with_stdio(false);
+	ll N,Q,left,right,add;
+	char opt;
+	scanf("%lld%lld",&N,&Q);
+	for(ll i=1;i<=N;i++){
+		scanf("%lld",&a[i]);
+	}
+	build(1,1,N);
+	for(ll i=1;i<=Q;i++)
+	{
+		cin>>opt;
+		scanf("%lld%lld",&left,&right);
+		if(opt=='C')
+		{
+			cin>>add;
+			change(1,left,right,add);
+		}else{
+			ans=0;
+			query(1,left,right);
+			cout<<ans<<endl;
+		}
+	}
+}
