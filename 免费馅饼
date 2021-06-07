@@ -10,9 +10,50 @@ https://vjudge.net/contest/441568#problem/R
 题目分析：
 这道题把各个时间段分层，实际上就是一个类似爬塔的模型
 但是我一开始想错了，想成了用dfs做，但是这样是错的，
-如果出现了断层，但是断层上方的钱比下方的多，dfs要不就是时间超限（正常爆搜），要不就是答案错误（我这种乱剪枝的傻子）
+可能有这种情况：出现了断层，但是断层上方的钱比下方的多
+反正dfs要不就是时间超限（正常爆搜），要不就是答案错误（我这种乱剪枝的傻子）
 
 这里要用的应该是动态规划
-从最久的时间点向下
+设最久的时间点为maxtime,当前时间点为i
+从maxtime-1向最初的时间点0向下遍历，对于i时刻某个位置的取值,即加上时间点i+1中与当前遍历到的位置相邻的三个点（见题目大意）的最大值
+即取得了当前这个子状态的最优解，然后不断向时间点0遍历，不断利用子状态，最终获得全局最优解，由题意得该最优解为dp[0][5](0时刻位置5的值)
 
 
+感觉还是没说清，因为状态转移方程懒得写，还是看代码吧、
+
+AC代码
+#include<iostream>
+#include<cstring>
+using namespace std;
+#define maxn 110000
+int N;
+int a[maxn][11];//存储i时刻j位置的值
+int MAX,maxd;
+
+void fun(){
+	for(int i=maxd-1;i>=0;i--){//遍历时间点
+		for(int j=0;j<=10;j++){//遍历位置
+			int tempmax=0;
+			for(int k=-1;k<=1;k++){//遍历三种可到达的位置
+				if(j+k<0||j+k>10)continue;
+				tempmax=max(a[i+1][j+k],tempmax);
+			}
+			a[i][j]+=tempmax;//加上最大值，取最优解
+		}
+	}
+}
+
+int main(){
+	while(scanf("%d",&N)&&N){
+		MAX=maxd=0;
+		memset(a,0,sizeof a);
+		int curtime,place;
+		for(int i=1;i<=N;i++){
+			scanf("%d%d",&place,&curtime);
+			maxd=max(curtime,maxd);//maxd存储最久时间，这样就可以使循环边界少一点
+			a[curtime][place]++;
+		}
+		fun();
+		cout<<a[0][5]<<endl;//answer
+	}
+}
