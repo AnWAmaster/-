@@ -1,0 +1,77 @@
+原题链接：https://vjudge.net/contest/441568#problem/D
+
+题目大意：
+给出一个密码表，从第一位到第26位记录的是a~z对应的密文
+给出一条信息的属性：前半段为加密后的字符，后半段为前半段加密前的字符
+但是这条信息现在可能不完整了
+给出这条可能不完整的信息，恢复这条信息并输出
+
+思路：
+这题一看就是要进行子串的比较，故想到要用字符串hash（好像KMP也可以，我用的hash）
+我们先设这个输入的信息为s1，这里强调下它是由密文+原文组成
+我们通过密码表将s1解密，获得原文+“不知道啥”的字符串s2
+我们可以知道s1原文部分一定是s2的原文部分的前缀，我们可以知道找到这个相同部分是可行的
+假设我们已经找到了，即知道了这个相同部分的长度len，即可以用s1.length()-len得到s1中的密文长度
+因为完整的信件原文和密文长度相同，再通过密码表，完整信件就出来了
+
+我们再想下怎么得到这个相同部分，因为只要考虑前缀和后缀，所以就是时间复杂度O（N）的遍历字符串
+别忘了我们使用了字符串hash，那么整个解题流程基本就出来了
+
+详情见代码
+#include<iostream>
+#include<cstring>
+using namespace std;
+#define P 131
+#define maxn 110000
+typedef unsigned long long ull;
+
+ull hash1[maxn],hash2[maxn],p[maxn];
+char dic[400];
+char s1[maxn],s2[maxn];
+
+ull gethash(int l,int r,ull *a){
+	return a[r]-a[l-1]*p[r-l+1];
+}
+
+
+int main(){
+	int T;
+	string diction;
+	cin>>T;
+	while(T--){
+		cin>>diction;
+		char base='a';
+		for(int i=0;base<='z';i++){
+			dic[diction[i]]=base++;
+		}
+		scanf("%s",s1+1);
+		int len=strlen(s1+1);
+		for(int i=1;i<=len;i++){
+			s2[i]=dic[s1[i]];
+		}
+		p[0]=1;
+		for(int i=1;i<=len;i++){
+			hash1[i]=hash1[i-1]*P+s1[i]-'a';
+			hash2[i]=hash2[i-1]*P+s2[i]-'a';
+			p[i]=p[i-1]*P;
+		}
+		int anslen;
+		for(int i=len;;i++){
+			if(i%2)continue;//这条信息一定是偶数长度，所以奇数就continue 
+			int qian=i/2,behind=len-qian;//前一半和后面的 
+			ull ans1=gethash(len-behind+1,len,hash1);//第一个串的后缀 
+			ull ans2=gethash(1,behind,hash2);//第二个串的前缀 
+			if(ans1==ans2){
+				anslen=qian;
+				break;
+			}
+		}
+		for(int i=1;i<=anslen;i++){
+			cout<<s1[i];
+		}
+		for(int i=1;i<=anslen;i++){
+			cout<<dic[s1[i]];
+		}
+		cout<<endl;
+	}
+}
