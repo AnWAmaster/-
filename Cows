@@ -1,0 +1,95 @@
+原题链接：
+https://vjudge.net/contest/441568#problem/I
+
+题目大意：
+给出N头牛的吃草范围，左闭右闭
+对于两头牛，如果A牛的吃草左区间>=B牛吃草左区间&&A牛吃草右区间<=B牛吃草右区间&&A吃草范围>B吃草范围
+则称A牛强于B牛
+求对于每头牛，有几头牛比她强？
+
+解题思路：
+有左区间和右区间两个关键字显然不适合进行比较
+我们先固定右区间大小作为排序第一关键字，左区间大小作为第二关键字
+bool cmp(Node a,Node b){
+	if(a.r!=b.r)return a.r>b.r;
+	else return a.l<b.l;
+}
+这样子就只要考虑一个端点的情况了
+然后我们就可以考虑树状数组的事了
+
+树状数组维护在该牛的左区间之前的区间个数
+按着排序后的牛的顺序遍历牛，通过树状数组的求和得到该牛的答案值，接着更新树状数组，为后面的牛的求值做准备
+
+注意“强壮”的定义，两牛如果区间相同就没有强弱之分，所以可以直接赋值过去，不需要树状数组操作
+
+#include<cstdio>
+#include<iostream>
+#include<algorithm>
+#include<cstring>
+using namespace std;
+#define maxn 111111
+
+int N;
+struct Node{
+	int l,r,idx;
+}n[maxn];
+
+int tree[maxn];
+int ans[maxn];
+
+bool cmp(Node a,Node b){
+	if(a.r!=b.r)return a.r>b.r;
+	else return a.l<b.l;
+}
+
+int lowbit(int x){
+	return x&-x;
+}
+
+int getsum(int x){
+	int ans=0;
+	while(x){
+		ans+=tree[x];
+		x-=lowbit(x);
+	}
+	return ans;
+}
+
+void update(int x,int val){
+	while(x<=N){
+		tree[x]+=val;
+		x+=lowbit(x);
+	}
+}
+
+int main()
+{
+	while(scanf("%d",&N)&&N)
+	{
+		memset(tree,0,sizeof tree);
+		for(int i=1;i<=N;i++)
+		{
+			scanf("%d%d",&n[i].l,&n[i].r);
+			n[i].l++,n[i].r++;//树状数组下标至少从1开始 
+			n[i].idx=i;
+		}
+		sort(n+1,n+N+1,cmp);
+		for(int i=1;i<=N;i++)
+		{
+			if(n[i].l==n[i-1].l&&n[i].r==n[i-1].r){
+				ans[n[i].idx]=ans[n[i-1].idx];
+			}else{
+				ans[n[i].idx]=getsum(n[i].l);
+			}
+			update(n[i].l,1);
+		}
+		for(int i=1;i<=N;i++){
+			cout<<ans[i];
+			if(i<N){
+				cout<<" ";
+			}else{
+				cout<<endl;
+			}
+		}
+	}
+}
