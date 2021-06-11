@@ -1,0 +1,78 @@
+原题链接：
+https://vjudge.net/contest/441568#problem/B
+
+题目大意：
+给出N个字符串，对于每个字符串str
+若str由EAEBE(E、A、B分别为三种组成不同的非空字符串)这样的结构组成，求E的最大长度
+否则输出0
+
+思路：
+满足条件时，str的前缀和后缀的E相等，中间再取一段E
+我一开始的思路是遍历前缀，如果当前的前缀等于等长的后缀，则在除去前缀和后缀的str中通过KMP找有没有这个E
+但是WA了半天。。。可能是我没处理小细节吧
+看完题解后，我了解到了一个很巧妙的方法：利用next数组
+
+next数组记录的是当前子串的最长公共前后缀，next[len]记录的就是这个母串的最大公共前后缀
+这样就可以获得是否该字符串是否满足EA?BE的情况了
+
+通过next数组的性质，我们也易知next[next[len]]也是这整个字符串的一个公共前后缀
+然后可以以此类推，不断缩短这个公共前后缀的长度
+因为EAEBE中间的那个E不一定等于最大公共前后缀，所以我们就需要去不断缩短公共前后缀来与它匹配
+这里也可以用到next数组去匹配
+
+如EAEBE，我当前找到了公共前后缀E，然后抛开前后缀，在AEB中找是否有E
+我们把目光放到EAEBE的前面三个字母EAE中，没错，如果能发现匹配的上，应该是通过EAE具有公共前后缀E发现的
+思路清晰了，解决方法就出来了
+
+AC代码
+#include<iostream>
+#include<cstring>
+using namespace std;
+#define maxn 1111111
+
+string str; 
+int nex[maxn],len;
+
+void getnex()
+{
+	nex[0]=-1;
+    for(int i=0,j=-1;i<len;)
+	{
+    	while(j!=-1&&str[i]!=str[j]){
+    		j=nex[j];
+		}
+		nex[++i]=++j;
+	}
+}
+
+int KMP()
+{
+    //i为前缀那个E的结尾的下标，也是E的长度
+	int i=nex[len];
+    while(i!=-1){
+    	//j=i*2,因为这里是从中间开始,中间那个E的结尾至少在i*2的位置 
+    	for(int j=i*2;j<=len-i;j++){
+    		if(nex[j]==i){//找到了E 
+    			return i;
+			}
+		}
+		i=nex[i];//没找到就缩小E的长度 
+	}
+	return 0;
+}
+
+int main()
+{
+	int T;
+	string a,b;
+	cin>>T;
+	while(T--){
+		cin>>str;
+		len=str.length();
+		getnex();
+		cout<<KMP()<<endl; 
+	}
+}
+
+
+
