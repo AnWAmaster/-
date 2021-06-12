@@ -1,0 +1,73 @@
+原题链接：
+https://vjudge.net/contest/441568#problem/N
+
+题目大意：
+不太好概述，放原题吧
+
+用以下方式定义合法的括号字符串
+1. 空串是合法的
+2. 如果S是合法的, 那么(S)和[S]也都是合法的
+3. 如果A和B是合法的, 那么AB是一个合法的字符串.
+
+举个栗子, 下列字符串都是合法的括号字符串:(), [], (()), ([]), ()[], ()[()]
+下面这些不是:(, [, ), )(, ([)], ([(]
+
+给出一个由字符'(', ')', '[', 和']'构成的字符串. 
+你的任务是找出一个最长的合法字符串的长度，使这个的字符串是给出的字符串的子序列。
+
+
+思路：
+这种匹配的题一看就有dp那味了
+定义dp[i][j]为区间i~j之间匹配上了的括号的个数
+
+自然就有如果a[i]==左括号，a[j]==右括号时，dp[i][j]=dp[i+1][j-1]+2
+然后就是区间dp基本的状态更新了---dp[i][j]=max(dp[i][j],dp[i][k]+dp[k+1][j])
+然后还要记得传递一下状态---dp[i][j]=max(dp[i][j],dp[i+1][j],dp[i][j-1])
+
+不过感觉我区间dp还是不太熟练。。。不能马上看出来要用到区间dp，卡了一阵子
+
+AC代码
+#include<iostream>
+#include<cstring>
+#include<algorithm>
+using namespace std;
+#define maxn 101
+
+int dp[maxn][maxn];
+
+bool check(char a,char b)
+{
+    return (a=='('&&b==')')||(a=='['&&b==']');
+}
+
+int _max(int a,int b,int c){
+	return max(a,max(b,c));
+}
+
+int main()
+{
+    string a;
+	while(cin>>a&&a!="end")
+    {
+		memset(dp,0,sizeof dp);
+        int len=a.length();
+        for(int l=1;l<len;l++)
+		{//区间长度 
+        	for(int begin=0;begin+l<len;begin++)
+			{//起点
+				int end=begin+l; //终点 
+				dp[begin][end]=_max(dp[begin][end],dp[begin][end-1],dp[begin+1][end]);//传递一下 
+        		if(check(a[begin],a[end]))
+				{//两边界匹配 
+        			dp[begin][end]=dp[begin+1][end-1]+2;
+				}
+				for(int gap=begin+1;gap+1<end;gap++)
+                {
+                    dp[begin][end]=max(dp[begin][end],dp[begin][gap]+dp[gap+1][end]);//在当前区间和子区间中维护最大值 
+                }
+			}
+		}
+        cout<<dp[0][len-1]<<endl;
+    }
+}
+
