@@ -1,0 +1,73 @@
+原题链接：
+https://vjudge.net/contest/441568#problem/Q
+
+杨氏矩阵和钩子公式用法学习视频
+https://www.bilibili.com/video/BV1Js411X7e4?t=372
+
+这个题按照任务安排是要用dp的，但是太麻烦了，就没用
+学一下杨氏矩阵和钩子公式，个人表示打开了新天地
+
+具体操作就是如果有N个数要在矩阵中排列，然后每个格子的钩数为hook[i]
+则ans=N!/(∏N i=1 (hook[i]))
+
+求钩数就按照钩子公式求，模拟
+但是求答案，因为题给数据最大可以出现30!
+所以要在中间约分一下
+
+这里还是看代码吧
+
+AC代码
+#include<iostream>
+#include<algorithm>
+using namespace std;
+typedef long long ull;
+int R,cnt,r[31],hook[31];
+ull deno,mol,gcd;
+
+
+void getHook()
+{
+	for(int i=1;i<=R;i++)//遍历各行 
+    {
+    	for(int j=1;j<=r[i];j++)//遍历当前行的各列 
+		{
+            cnt++;//cnt表示现在遍历到的是第几个元素 
+			hook[cnt]=r[i]-j;//右边的格子数
+            for(int k=i+1;k<=R;k++)//查看当前格子下面有几个格子 
+            {
+            	if (r[k]>=j)hook[cnt]++;
+                else break;//防止出现阶梯型那种情况，未到最低端但是当前位置无格子 
+			}
+			hook[cnt]++;//钩数要再加上自己这个格子 
+        }
+	}
+}
+
+ull getans(){
+	mol=deno=1;//分子分母初始化为1 
+    for(int i=1;i<=cnt;i++) 
+	{
+        mol*=i;//分子为阶乘 
+        deno*=hook[i];//分母为钩数的乘积 
+        gcd=__gcd(mol,deno);
+        if(gcd>1)//30!过大，要在乘的过程中多多约分 
+		{
+            mol/=gcd;
+            deno/=gcd;
+        }
+    }
+    return mol/deno;
+}
+
+int main() 
+{
+    while(cin>>R&&R) 
+	{
+        cnt=0;
+		for(int i=1;i<=R;i++)cin>>r[i];
+		getHook();
+		ull ans=getans();
+        cout<<ans<<endl;
+    }
+}
+
