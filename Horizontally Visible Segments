@@ -1,0 +1,130 @@
+原题链接
+https://vjudge.net/contest/441568#problem/H
+
+题目大意：
+给出N条垂直于X轴的线段，给出他们每条线段的横坐标、最低纵坐标、最高纵坐标
+规定“两条线段可见”的含义为存在一条垂直于Y轴的线，它能在不碰到除这两条线段的其他线段的情况下碰到这两条线段
+这里注意线段的端点为开区间，即如果按从左到右的顺序存在[1,2],[2,3],[2,4],[1,4]四条线段([y1,y2])，则[1,4]线段应能看见3条线段
+题目要我们求三条线段互相可见的这种三元组的个数
+
+分析：
+都给出区间这种东西了，需要想到用线段树
+我们可以把线段按X轴排序，然后我们要找“可见”，只需要在遍历到当前线段时向X轴左侧去看区间的线段覆盖情况
+这个Query操作就是找当前遍历到的这个线段的区域内在之前已经将其覆盖的最新的线段的下标
+（最新的意思是如果第二条和第三条线段都覆盖了这个区域，那么第三条为最新）
+
+然后接着要来一个Update操作更新区间覆盖情况
+因为要多次更新，可以考虑lazytag优化
+用一个color变量，表示当前区间是最新被第几条线段覆盖的，它也可以顺带完成lazytag的操作
+线段树维护的就是这个color了
+
+然后还有一个小坑点就是我上面说的开区间问题，看博客get到了一个很妙的方法：将区间乘2，那么对于我上面给的例子，就有
+[2,4][4,6][4,8][2,8]可以轻易发现[5,5]这个区域可以让第一条和第四条互相可见
+
+AC代码
+#include <iostream>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+#define MAXN 8001
+bool see[MAXN][MAXN];
+
+struct node{
+	int l,r;
+	int color;//记录该区间最新染的色，并有lazy的作用 
+}tree[MAXN*8];
+
+struct Node{
+	int x,y1,y2;
+}p[MAXN];
+
+bool cmp(Node a,Node b){
+	return a.x<b.x;
+}
+
+void build(int cur,int left,int right){
+	tree[cur].l=left;
+	tree[cur].r=right;
+	tree[cur].color=0;
+	if(left==right)return;
+	int mid=(left+right)/2;
+	build(cur*2,left,mid);
+	build(cur*2+1,mid+1,right);
+}
+
+void pushdown(int cur)
+{
+	if(tree[cur].color)
+	{
+		tree[cur*2].color=tree[cur*2+1].color=tree[cur].color;//下放颜色 
+		tree[cur].color=0;///取消标记
+	}
+}
+void query(int cur,int l,int r,int val)
+{
+	if(tree[cur].l>r||tree[cur].r<l)return;
+	if(tree[cur].color!=0)
+	{
+		see[tree[cur].color][val]=true;//将当前遍历到的线段与该区域最新覆盖的线段联系起来 
+		return;
+	}
+	if(tree[cur].l==tree[cur].r)return;
+	pushdown(cur);
+	query(cur*2,l,r,val);
+	query(cur*2+1,l,r,val);
+}
+
+void update(int cur,int l,int r,int val){
+	if(tree[cur].l>r||tree[cur].r<l)return;
+	if(tree[cur].l>=l&&tree[cur].r<=r)
+	{
+		tree[cur].color=val;//区间染色 
+		return;
+	}	
+	pushdown(cur);
+	update(cur*2,l,r,val);
+	update(cur*2+1,l,r,val);
+}
+int main(){
+	std::ios::sync_with_stdio(false);
+	int T,N;
+	cin>>T;
+	while(T--)
+	{
+		cin>>N;
+		int maxn=0;
+		for(int i=1;i<=N;i++)
+		{
+			cin>>p[i].y1>>p[i].y2>>p[i].x;
+			p[i].y1*=2;//乘2，解决开区间的问题 
+			p[i].y2*=2;
+			maxn=max(maxn,p[i].y2);
+		}
+		memset(see,0,sizeof(see));
+		build(1,0,maxn);
+		sort(p+1,p+N+1,cmp);
+		for(int i=1;i<=N;i++)
+		{
+			//先查完再更新 ，不然会覆盖掉本来看得到的线段 
+			query(1,p[i].y1,p[i].y2,i);//第i个线段的色是i 
+			update(1,p[i].y1,p[i].y2,i);
+		}
+		int ans=0;
+		for(int i=1;i<=N;i++)
+		{
+			for(int j=1;j<=N;j++)
+			{
+				if(see[i][j])//两线段可见 
+				{
+					for(int k=1;k<=N;k++)//找第三条 
+					{
+						if(see[i][k]&&see[j][k])ans++;//找到三条分别可见的 
+					}
+				}
+			}
+		}
+		cout<<ans<<endl; 
+	}
+	return 0;
+}
+
