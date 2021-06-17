@@ -2,7 +2,71 @@
 https://vjudge.net/contest/441568#problem/P
 
 题目大意：
-将给定长度为N的数组，修改每个数的大小，对于将第i个数x修改为y，花费为abs(x-y)最终变为非上升或者非下降的序列。
+给定长度为N的数组，要求修改每个数的大小，最终变为非上升或者非下降的序列，求最小花费。
+对于将第i个数x修改为y，花费为abs(x-y)
 
 思路：
 将序列变为上升或下降序列，易知后面的数要大于等于前面的所有数，即存在子状态传递到当前状态
+想到使用动态规划
+
+那么就要想一下动态转移方程了
+先尝试定义dp[i][j]   i j为将第i个数变成j，且前i-1个花费最优的最小花费
+但是因为题给数据0 ≤ Ai ≤ 1,000,000,000  过大
+考虑离散化  将j定义为离散数组排序后的第j个数而不是数值j
+那么就有
+dp[i][j]=min(Abs(a[i]-lisan[j])+dp[i-1][j],dp[i][j-1]);
+
+结果为dp[N][N]
+取将数组变为非递增、非递减中的min值
+
+AC代码
+#include <iostream>
+#include <cstring>
+#include <algorithm>
+#include<cmath> 
+using namespace std;
+#define inf 9999999999
+typedef long long ll;
+
+int N;
+ll a[2005];
+ll lisan[2005];
+ll dp[2005][2005];
+
+ll Abs(ll x){
+	if(x<0){
+		return -x;
+	}return x;
+}
+
+ll fun()
+{
+	memset(dp,0,sizeof(dp));
+	for(int i=0;i<=N;i++)//初始化 
+	{
+		dp[i][0]=inf;
+	}
+	for(int i=1;i<=N;i++)//遍历每个数 
+	{
+		for(int j=1;j<=N;j++)//遍历每个数，不过这次是将第i个数变成升/降序时第j个数的最小代价 
+		{
+			dp[i][j]=min(Abs(a[i]-lisan[j])+dp[i-1][j],dp[i][j-1]);
+		}
+	}
+	return dp[N][N];
+}
+
+int main()
+{
+	cin>>N;
+	for(int i=1;i<=N;i++)
+	{
+		cin>>a[i];
+		lisan[i]=a[i];
+	}
+	sort(lisan+1,lisan+N+1);//先来个升序的 
+	ll ans=fun();
+	reverse(lisan+1,lisan+N+1);//再弄成降序的 
+	ans=min(ans,fun());
+	cout<<ans<<endl;//取两次结果的最优值 
+}
