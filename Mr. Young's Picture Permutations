@@ -29,7 +29,7 @@ void getHook()
 {
 	for(int i=1;i<=R;i++)//遍历各行 
     {
-    	for(int j=1;j<=r[i];j++)//遍历当前行的各列 
+    	for(int j=1;j<=r[i];j++)//遍历当前行的各列  
 		{
             cnt++;//cnt表示现在遍历到的是第几个元素 
 			hook[cnt]=r[i]-j;//右边的格子数
