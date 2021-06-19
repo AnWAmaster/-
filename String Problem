@@ -1,0 +1,131 @@
+原题链接：
+https://vjudge.net/contest/441568#problem/E
+
+题目大意：
+不太好概括。。。我就放原题题干了
+
+对于一个长n的字符串s，可以进行左移操作，即将前1位移至串尾，进行n次左移操作，可以得到n个与原串循环同构的字符串，现在要求出这字符串s中最小表示的位置和最大表示的位置，以及在n个循环同构的字符串中分别出现了多少次。
+例如：字符串"SKYLONG"
+SKYLONG 1
+KYLONGS 2
+YLONGSK 3
+LONGSKY 4
+ONGSKYL 5
+NGSKYLO 6
+GSKYLON 7
+最小表示是GSKYLON，最大表示是YLONGSK，都只出现了一次。
+
+题目思路：
+这个题是真没思路。。。题目都看了老半天  最后还是看了题解
+了解了“最大最小表示法”
+
+
+对于最大最小表示法，就是将字符串不断旋转，得到字典序最大或者最小的。
+其问题实质是求S串的一个位置，从这个位置开始循环输出S，得到的S’字典序最大最小。
+设计i,j两个指针。其中i指向最小表示的位置，j作为比较指针。
+|————————————————————————————————————————————————————————————|
+|                                                            |  
+|令i=0,j=1                                                    |
+|如果S[i] > S[j] i=j,j=i+1                                    |
+|如果S[i] < S[j] j++                                          |
+|如果S[i]==S[j] 设指针k，分别从i和j位置向下比较，直到S[i] != S[j]|
+|               如果S[i+k] > S[j+k] i=i+k                     |
+|               否则j++                                       | 
+|返回i和j的小者                                                |
+|—————————————————————————————————————————————————————————————|
+然后就是求该子串在整串中的出现个数，就是循环节了
+用KMP的next数组可得
+
+AC代码：
+#include<iostream>
+using namespace std;
+#define maxn 1000001
+
+int nex[maxn];
+
+void getnex(string str)
+{
+	nex[0]=-1;
+    for(int i=0,j=-1;i<str.length();)
+	{
+    	while(j!=-1&&str[i]!=str[j]){
+    		j=nex[j];
+		}
+		nex[++i]=++j;
+	}
+}
+
+int min_exp(string str)
+{	
+ 	int i=0,j=1,k=0;
+ 	int len=str.length();
+ 	while (j<len&&i<len&&k<len)
+ 	{
+ 		if(str[(i+k)%len]==str[(j+k)%len])
+ 		{
+ 			k++;//向后继续 
+ 		}
+ 		else
+ 		{
+ 			if(str[(i+k)%len]>str[(j+k)%len])
+ 			{
+ 				i=i+k+1;
+ 			}
+ 			else
+ 			{
+ 				j=j+k+1;
+ 			}
+ 			if(i==j)j++;	
+ 			k=0;
+ 		}
+ 	}
+ 	return min(i,j);
+}
+ 
+int max_exp(string str)
+{	
+ 	int i=0,j=1,k=0;
+ 	int len=str.length();
+ 	while (j<len&&i<len&&k<len)
+ 	{
+ 		if(str[(i+k)%len]==str[(j+k)%len])
+ 		{
+ 			k++;//向后继续 
+ 		}
+ 		else
+ 		{
+ 			if(str[(i+k)%len]>str[(j+k)%len])
+ 			{
+ 				j=j+k+1;
+ 			}
+ 			else
+ 			{
+ 				i=i+k+1;
+ 			}
+ 			if(i==j)j++;	
+ 			k=0;
+ 		}
+ 	}
+ 	return min(i,j);
+}
+
+int main(){
+	string str;
+	int minsp,maxsp;
+	int ans;
+	std::ios::sync_with_stdio(false); 
+	while(cin>>str){
+        minsp=min_exp(str);
+        maxsp=max_exp(str);
+        getnex(str);
+        int l=str.length()-nex[str.length()];//求循环节 
+        if(str.length()%l){
+        	ans=1;//无循环节 
+		}else{
+			ans=str.length()/l;
+		}
+		cout<<minsp+1<<" "<<ans<<" "<<maxsp+1<<" "<<ans<<endl;
+    }
+    return 0;
+}
+
